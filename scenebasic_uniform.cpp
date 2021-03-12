@@ -12,63 +12,38 @@ using std::endl;
 
 #include "helper/glutils.h"
 
+#include <glm/gtc/matrix_transform.hpp>
 using glm::vec3;
+using glm::mat4;
+using glm::vec4;
+using glm::mat3;
 
-SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f) {}
+SceneBasic_Uniform::SceneBasic_Uniform() 
+{
 
+    mesh = ObjMesh::load("../Comp-3015-assignment-1/media/model.obj", true);
+}
+float x, z;
 void SceneBasic_Uniform::initScene()
 {
-    compile();
+	compile();
 
-    std::cout << std::endl;
+	glEnable(GL_DEPTH_TEST);
 
-    prog.printActiveUniforms();
+	model = mat4(1.0f);
 
-    /////////////////// Create the VBO ////////////////////
-    float positionData[] = {
-        -0.8f, -0.8f, 0.0f,
-         0.8f, -0.8f, 0.0f,
-         0.0f,  0.8f, 0.0f };
-    float colorData[] = {
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f };
+	view = glm::lookAt(vec3(0.5f, 0.75f, 0.75f), vec3(0.0f, 0.0f, 0.0f),
+		vec3(0.0f, 1.0f, 0.0f));
 
-    // Create and populate the buffer objects
-    GLuint vboHandles[2];
-    glGenBuffers(2, vboHandles);
-    GLuint positionBufferHandle = vboHandles[0];
-    GLuint colorBufferHandle = vboHandles[1];
+	projection = mat4(1.0f);
 
-    glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), positionData, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, colorBufferHandle);
-    glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), colorData, GL_STATIC_DRAW);
 
-    // Create and set-up the vertex array object
-    glGenVertexArrays( 1, &vaoHandle );
-    glBindVertexArray(vaoHandle);
+	prog.setUniform("lights.Position", view * glm::vec4(x, 1.2f, z + 1.0f, 1.0f));
 
-    glEnableVertexAttribArray(0);  // Vertex position
-    glEnableVertexAttribArray(1);  // Vertex color
+	prog.setUniform("lights.L", vec3(0.0f, 0.0f, 0.8f));
 
-    #ifdef __APPLE__
-        glBindBuffer(GL_ARRAY_BUFFER, positionBufferHandle);
-        glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *)NULL );
-
-        glBindBuffer(GL_ARRAY_BUFFER, colorBufferHandle);
-        glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *)NULL );
-    #else
-    		glBindVertexBuffer(0, positionBufferHandle, 0, sizeof(GLfloat)*3);
-    		glBindVertexBuffer(1, colorBufferHandle, 0, sizeof(GLfloat)*3);
-
-    		glVertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, 0);
-    		glVertexAttribBinding(0, 0);
-    		glVertexAttribFormat(1, 3, GL_FLOAT, GL_FALSE, 0);
-    	  glVertexAttribBinding(1, 1);
-    #endif
-    glBindVertexArray(0);
+	prog.setUniform("lights.La", vec3(0.0f, 0.0f, 0.8f));
 }
 
 void SceneBasic_Uniform::compile()
@@ -91,19 +66,41 @@ void SceneBasic_Uniform::update( float t )
 
 void SceneBasic_Uniform::render()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
-    
-    //create the rotation matrix here and update the uniform in the shader 
+	glClear(GL_COLOR_BUFFER_BIT);
 
-    glBindVertexArray(vaoHandle);
-    glDrawArrays(GL_TRIANGLES, 0, 3 );
+	glClear(GL_DEPTH_BUFFER_BIT);
 
-    glBindVertexArray(0);
+
+	prog.setUniform("Material.Kd", 0.4f, 0.4f, 0.4f);
+	prog.setUniform("Material.Ks", 0.9f, 0.9f, 0.9f);
+	prog.setUniform("Material.Ka", 0.5f, 0.5f, 0.5f);
+	prog.setUniform("Material.Shininess", 180.0f);
+
+	model = mat4(1.0f);
+	model = glm::rotate(model, glm::radians(90.0f), vec3(0.0f, 1.0f, 0.0f));
+	setMatrices();
+	mesh->render();
+
+}
+
+void SceneBasic_Uniform::setMatrices()
+{
+	mat4 mv;
+
+	mv = view * model;
+
+	prog.setUniform("ModelViewMatrix", mv);
+	prog.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
+
+	prog.setUniform("MVP", projection * mv);
+
 }
 
 void SceneBasic_Uniform::resize(int w, int h)
 {
-    width = w;
-    height = h;
-    glViewport(0,0,w,h);
+	glViewport(0, 0, w, h);
+	width = w;
+	height = h;
+	projection = glm::perspective(glm::radians(70.0f), (float)w / h,
+		0.3f, 100.0f);
 }

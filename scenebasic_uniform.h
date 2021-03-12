@@ -6,14 +6,22 @@
 #include <glad/glad.h>
 #include "helper/glslprogram.h"
 
+#include <glm/glm.hpp>
+
+#include "helper/Objmesh.h"
+
 class SceneBasic_Uniform : public Scene
 {
 private:
     GLuint vaoHandle;
     GLSLProgram prog;
-    float angle;
+    //float angle;
+
+    std::unique_ptr<ObjMesh> mesh;
 
     void compile();
+
+    void setMatrices();
 
 public:
     SceneBasic_Uniform();
