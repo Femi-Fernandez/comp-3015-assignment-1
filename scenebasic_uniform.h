@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 
 #include "helper/Objmesh.h"
+#include "helper/plane.h"
 
 class SceneBasic_Uniform : public Scene
 {
@@ -18,6 +19,7 @@ private:
     //float angle;
 
     std::unique_ptr<ObjMesh> mesh;
+    Plane plane_;
 
     void compile();
 
