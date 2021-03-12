@@ -59,7 +59,7 @@ void SceneBasic_Uniform::initScene()
 	{
 		projection = mat4(1.0f);
 		prog.setUniform("Spot.L", vec3(0.9f));
-		prog.setUniform("Spot.La", vec3(0.9f));
+		prog.setUniform("Spot.La", vec3(0.3f));
 		prog.setUniform("Spot.Exponent", 50.0f);
 		prog.setUniform("Spot.Cutoff", glm::radians(15.0f));
 	}

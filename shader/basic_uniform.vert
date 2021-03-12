@@ -39,16 +39,16 @@ void main()
 
         vec3 norm = normalize( NormalMatrix * VertexNormal );
         vec3 tang = normalize( NormalMatrix * vec3(VertexTangent) );
-
+       
         // Compute the binormal
         vec3 binormal = normalize( cross( norm, tang ) ) * VertexTangent.w;
-
+       
         // Matrix for transformation to tangent space
         mat3 toObjectLocal = mat3(
         tang.x, binormal.x, norm.x,
         tang.y, binormal.y, norm.y,
         tang.z, binormal.z, norm.z ) ;
-    
+       
         vec3 pos = vec3( ModelViewMatrix * vec4(VertexPosition,1.0) );
 
         LightDir = toObjectLocal * (light.Position.xyz - pos);
@@ -62,6 +62,7 @@ void main()
     {
         Normal = normalize( NormalMatrix * VertexNormal);
         Position = (ModelViewMatrix * vec4(VertexPosition,1.0)).xyz;
+        TexCoord = VertexTexCoord;
         gl_Position = MVP * vec4(VertexPosition,1.0);
     }
 }

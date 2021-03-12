@@ -81,7 +81,10 @@ uniform struct SpotLightInfo {
 
 vec3 blinnPhongSpot( vec3 position, vec3 n )
 {
-    vec3 ambient =  Spot.La * Material.Ka;
+    vec4 baseTex = texture(ColorTex, TexCoord).rgba;
+    vec3 col = baseTex.rgb;
+
+    vec3 ambient =  Spot.La * Material.Ka * col;
     vec3 s = normalize(vec3(Spot.Position) - position); 
 
     float cosAng = dot(-s, normalize(Spot.Direction)); //cosine of the angle
@@ -95,7 +98,7 @@ vec3 blinnPhongSpot( vec3 position, vec3 n )
         spotScale = pow( cosAng, Spot.Exponent );
 
         float sDotN = dot(s,n);   //calculate dot product between s and n
-        vec3 diffuse = Material.Kd * sDotN;//calculate the diffues
+        vec3 diffuse = Material.Kd * sDotN * col;//calculate the diffues
         
         //calculate the specular
         if( sDotN > 0.0 )
@@ -109,45 +112,7 @@ vec3 blinnPhongSpot( vec3 position, vec3 n )
             
     }
     return ambient + spotScale * Spot.L * (diffuse + spec);
-} 
-
-//vec3 blinnPhongSpot( vec3 position, vec3 n )
-//{
-//    
-//    vec4 baseTex = texture(ColorTex, TexCoord).rgba;
-//    vec3 col = baseTex.rgb;
-//
-//    vec3 ambient =  Spot.La * Material.Ka* col;
-//    vec3 s = normalize(vec3(Spot.Position) - position); 
-//
-//    float cosAng = dot(-s, normalize(Spot.Direction)); //cosine of the angle
-//    float angle = acos( cosAng ); //gives you the actual angle
-//    float spotScale = 0.0;
-//
-//    vec3 spec = vec3(0.0);
-//    vec3 diffuse = vec3(0,0,0);
-//    if(angle < Spot.Cutoff )
-//    {
-//        spotScale = pow( cosAng, Spot.Exponent );
-//
-//        float sDotN = dot(s,n);   //calculate dot product between s and n
-//        vec3 diffuse = Material.Kd * sDotN * col;//calculate the diffues
-//        
-//        //calculate the specular
-//        if( sDotN > 0.0 )
-//            {
-//             vec3 v = normalize(-position.xyz);
-//
-//             vec3 h = normalize(v +s);
-//             spec = Material.Ks * pow( max( dot(h,n), 0.0 ),Material.Shininess );
-//             return ambient + spotScale * Spot.L * (diffuse + spec);
-//            }
-//            
-//    }
-//    return ambient + spotScale * Spot.L * (diffuse + spec);
-//} 
-//
-
+}
 
 void main() {
 
