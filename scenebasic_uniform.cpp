@@ -12,6 +12,8 @@ using std::endl;
 
 #include "helper/glutils.h"
 
+#include "helper/texture.h"
+
 #include <glm/gtc/matrix_transform.hpp>
 using glm::vec3;
 using glm::mat4;
@@ -39,11 +41,20 @@ void SceneBasic_Uniform::initScene()
 
 
 
-	prog.setUniform("lights.Position", view * glm::vec4(x, 1.2f, z + 1.0f, 1.0f));
+	prog.setUniform("light.Position", view * glm::vec4(x, 1.2f, z + 1.0f, 1.0f));
 
-	prog.setUniform("lights.L", vec3(0.0f, 0.0f, 0.8f));
+	prog.setUniform("light.L", vec3(0.8f, 0.8f, 0.8f));
 
-	prog.setUniform("lights.La", vec3(0.0f, 0.0f, 0.8f));
+	prog.setUniform("light.La", vec3(0.8f, 0.8f, 0.8f));
+
+
+	GLuint colour = Texture::loadTexture("media/texture/bikeTex.png");
+
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, colour);
+
+
 }
 
 void SceneBasic_Uniform::compile()

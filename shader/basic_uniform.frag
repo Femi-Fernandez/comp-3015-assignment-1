@@ -1,7 +1,12 @@
 #version 460
 
-in vec3 Position;
-in vec3 Normal;
+//in vec3 Position;
+//in vec3 Normal;
+//in vec2 TexCoord;
+
+in vec3 LightDir;
+in vec3 ViewDir;
+in vec2 TexCoord;
 
 uniform mat4 ModelViewMatrix;
 
@@ -18,22 +23,30 @@ vec3 Ka; // Ambient reflectivity
  float Shininess; // Specular shininess factor
 } Material;
 
+layout(binding=0) uniform sampler2D ColorTex;
+//layout(binding=1) uniform sampler2D NormalMapTex;
+
 layout (location = 0) out vec4 FragColor;
 
 vec3 phongModel( vec3 position, vec3 n ) {
 
 //calculate ambient here, to access each light La value use this:
     //lights[light].La
-    vec3 ambient =  light.La * Material.Ka;
+    vec4 baseTex = texture(ColorTex, TexCoord).rgba;
+
+    vec3 col = baseTex.rgb;
+
+        vec3 ambient =  light.La * col;
+
 
     //calculate diffuse here
-    //find out s vector
-    //vec4 p = ModelViewMatrix * vec4(position, 1.0);
-    vec3 s = normalize(vec3(light.Position )- position);    
-    
+   // vec3 s = normalize(vec3(lights.Position)- position);    
+    vec3 s = normalize(position);    
+
     //calculate dot product between s & n
-    float sDotN = dot(s,n);                                              
-     vec3 diffuse = Material.Kd * sDotN;
+    float sDotN = max(dot(s,n), 0);                                              
+    vec3 diffuse = Material.Kd * sDotN * col;
+
     //calculate specular here
 
     vec3 spec = Material.Ks * light.L * sDotN;
@@ -42,16 +55,17 @@ vec3 phongModel( vec3 position, vec3 n ) {
 
      if( sDotN > 0.0 )
     {
-     vec3 v = normalize(-position.xyz);
+     vec3 v = normalize(-position.xyz + ViewDir);
 
      //phong model
      vec3 r = reflect( -s, n );   
-     spec = Material.Ks * pow( max( dot(r,v), 0.0 ),Material.Shininess );
+     spec = Material.Ks * pow( max( dot(n,v), 0.0 ),Material.Shininess );
 
     //blinnPhong
     //vec3 h = normalize(v +s);
     //spec = Material.Ks * pow( max( dot(h,n), 0.0 ),Material.Shininess );
-     }
+     }   
+
      return ambient + light.L * (diffuse + spec);
 
 }
@@ -59,5 +73,7 @@ vec3 phongModel( vec3 position, vec3 n ) {
 
 
 void main() {
-   FragColor = vec4(phongModel(Position, normalize(Normal)), 1);
+    vec3 norm = texture(ColorTex, TexCoord).xyz;
+    norm.xy = 2.0 * norm.xy - 1.0;
+   FragColor = vec4(phongModel(LightDir, normalize(norm)), 1);
 }
