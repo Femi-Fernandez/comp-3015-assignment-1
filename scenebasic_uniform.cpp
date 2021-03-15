@@ -39,12 +39,12 @@ void SceneBasic_Uniform::initScene()
 
 	model = mat4(1.0f);
 
-	//view = glm::lookAt(vec3(0.5f, 0.75f, 0.75f), vec3(0.0f, 0.0f, 0.0f),vec3(0.0f, 1.0f, 0.0f));
-	view = glm::lookAt(vec3(5.0f, 5.0f, 7.5f), vec3(0.0f, 0.75f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	view = glm::lookAt(vec3(0.5f, 0.75f, 0.75f), vec3(0.0f, 0.0f, 0.0f),vec3(0.0f, 1.0f, 0.0f));
+	//view = glm::lookAt(vec3(5.0f, 5.0f, 7.5f), vec3(0.0f, 0.75f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 	projection = mat4(1.0f);
 
 
-	lightingType = 2;
+	lightingType = 1;
 	prog.setUniform("lightingSelect", lightingType);
 
 
@@ -65,11 +65,14 @@ void SceneBasic_Uniform::initScene()
 	}
 
 
-	GLuint colour = Texture::loadTexture("media/texture/bikeTex.png");
-
+	GLuint colour = Texture::loadTexture("media/texture/scifi_bike_base.jpg");
+	GLuint norm = Texture::loadTexture("media/texture/scifi_bike_norm.png");
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, colour);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, norm);
 
 
 }
@@ -113,7 +116,8 @@ void SceneBasic_Uniform::render()
 	prog.setUniform("Material.Shininess", 180.0f);
 
 	model = mat4(1.0f);
-	model = glm::rotate(model, glm::radians(90.0f), vec3(0.0f, 1.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(180.0f), vec3(0.0f, 1.0f, 0.0f));
+	//model = glm::scale(model, vec3(2.0f, 2.0f, 2.0f));
 	setMatrices();
 	mesh->render();
 

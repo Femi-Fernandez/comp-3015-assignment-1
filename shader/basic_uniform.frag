@@ -25,6 +25,7 @@ vec3 Ka; // Ambient reflectivity
 uniform int lightingSelect;
 
 layout(binding=0) uniform sampler2D ColorTex;
+layout(binding=1) uniform sampler2D NormalTex;
 
 layout (location = 0) out vec4 FragColor;
 
@@ -36,7 +37,7 @@ vec3 phongModel( vec3 position, vec3 n ) {
 
     vec4 baseTex = texture(ColorTex, TexCoord).rgba;
     vec3 col = baseTex.rgb;
-        vec3 ambient =  light.La * col;
+    vec3 ambient =  light.La * Material.Ka * col;
 
 
     //calculate diffuse here
@@ -118,14 +119,14 @@ void main() {
 
     if (lightingSelect == 1)
         {
-            vec3 norm = texture(ColorTex, TexCoord).xyz;
+            vec3 norm = texture(NormalTex, TexCoord).xyz;
             norm.xy = 2.0 * norm.xy - 1.0;
             FragColor = vec4(phongModel(LightDir, normalize(norm)), 1);
         }
     
         if (lightingSelect == 2)
         {
-            vec3 norm = texture(ColorTex, TexCoord).xyz;
+            vec3 norm = texture(NormalTex, TexCoord).xyz;
             norm.xy = 2.0 * norm.xy - 1.0;
             FragColor = vec4(blinnPhongSpot(Position, normalize(Normal)), 1);
         
