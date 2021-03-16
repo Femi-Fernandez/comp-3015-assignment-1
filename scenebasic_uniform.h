@@ -10,16 +10,20 @@
 
 #include "helper/Objmesh.h"
 #include "helper/plane.h"
+#include "helper/skybox.h"
 
 class SceneBasic_Uniform : public Scene
 {
 private:
     GLuint vaoHandle;
     GLSLProgram prog;
+    GLSLProgram ground;
     //float angle;
 
     std::unique_ptr<ObjMesh> mesh;
     Plane plane_;
+    SkyBox sky;
+    float angle, tPrev, rotSpeed;
 
     void compile();
 

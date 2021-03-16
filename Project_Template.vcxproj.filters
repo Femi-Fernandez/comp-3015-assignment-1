@@ -57,6 +57,9 @@
     <ClCompile Include="helper\plane.cpp">
       <Filter>helper</Filter>
     </ClCompile>
+    <ClCompile Include="helper\skybox.cpp">
+      <Filter>helper</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\basic_uniform.frag">
@@ -65,6 +68,8 @@
     <None Include="shader\basic_uniform.vert">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shader\ground_shader.frag" />
+    <None Include="shader\ground_shader.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helper\scene.h">
@@ -104,6 +109,9 @@
       <Filter>helper</Filter>
     </ClInclude>
     <ClInclude Include="helper\plane.h">
+      <Filter>helper</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\skybox.h">
       <Filter>helper</Filter>
     </ClInclude>
   </ItemGroup>

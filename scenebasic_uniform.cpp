@@ -24,8 +24,14 @@ using glm::mat3;
 float x, z;
 
 int lightingType;
+int bikeNum;
+int concreteNum;
+SceneBasic_Uniform::SceneBasic_Uniform() : plane_(10.0f, 10.0f, 100, 100), 
+angle(0.0f), 
+tPrev(0.0f),
+rotSpeed(glm::pi<float>() / 8.0f),
+sky(100.0f)
 
-SceneBasic_Uniform::SceneBasic_Uniform() : plane_(10.0f, 10.0f, 100, 100)
 {
 
     mesh = ObjMesh::load("../Comp-3015-assignment-1/media/model.obj", true);
@@ -34,7 +40,7 @@ SceneBasic_Uniform::SceneBasic_Uniform() : plane_(10.0f, 10.0f, 100, 100)
 void SceneBasic_Uniform::initScene()
 {
 	compile();
-
+	prog.use();
 	glEnable(GL_DEPTH_TEST);
 
 	model = mat4(1.0f);
@@ -45,14 +51,16 @@ void SceneBasic_Uniform::initScene()
 
 
 	lightingType = 1;
+	bikeNum = 1;
+	concreteNum = 2;
 	prog.setUniform("lightingSelect", lightingType);
-
+	prog.setUniform("textureToUse", bikeNum);
 
 	if (lightingType == 1)
 	{
 		prog.setUniform("light.Position", view * glm::vec4(x, 1.2f, z + 1.0f, 1.0f));
 		prog.setUniform("light.L", vec3(0.8f, 0.8f, 0.8f));
-		prog.setUniform("light.La", vec3(0.8f, 0.8f, 0.8f));
+		prog.setUniform("light.La", vec3(0.8f, 0.8f, 0.8f));	
 	}
 
 	if (lightingType == 2)
@@ -68,12 +76,30 @@ void SceneBasic_Uniform::initScene()
 	GLuint colour = Texture::loadTexture("media/texture/scifi_bike_base.jpg");
 	GLuint norm = Texture::loadTexture("media/texture/scifi_bike_norm.png");
 
+	GLuint groundcol = Texture::loadTexture("media/texture/concrete_col.jpg");
+	GLuint groundnorm = Texture::loadTexture("media/texture/concrete_norm.jpg");
+
+
+
+	//GLuint cubeTex = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
+	////activate and bindtexture
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTex);
+
+
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, colour);
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, norm);
 
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, groundcol);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, groundnorm);
 
 }
 
@@ -83,7 +109,9 @@ void SceneBasic_Uniform::compile()
 		prog.compileShader("shader/basic_uniform.vert");
 		prog.compileShader("shader/basic_uniform.frag");
 		prog.link();
+		
 		prog.use();
+
 	} catch (GLSLProgramException &e) {
 		cerr << e.what() << endl;
 		exit(EXIT_FAILURE);
@@ -93,6 +121,13 @@ void SceneBasic_Uniform::compile()
 void SceneBasic_Uniform::update( float t )
 {
 	//update your angle here
+	float deltaT = t - tPrev;
+	if (tPrev == 0.0f)
+		deltaT = 0.0f;
+	tPrev = t;
+	angle += rotSpeed * deltaT;
+	if (angle > glm::two_pi<float>())
+		angle -= glm::two_pi<float>();
 
 }
 
@@ -109,7 +144,7 @@ void SceneBasic_Uniform::render()
 		mat3 normalMatrix = mat3(vec3(view[0]), vec3(view[1]), vec3(view[2]));
 		prog.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
 	}
-
+	prog.setUniform("textureToUse", bikeNum);
 	prog.setUniform("Material.Kd", 0.4f, 0.4f, 0.4f);
 	prog.setUniform("Material.Ks", 0.9f, 0.9f, 0.9f);
 	prog.setUniform("Material.Ka", 0.5f, 0.5f, 0.5f);
@@ -121,7 +156,7 @@ void SceneBasic_Uniform::render()
 	setMatrices();
 	mesh->render();
 
-
+	prog.setUniform("textureToUse", concreteNum);
 	prog.setUniform("Material.Kd", 0.7f, 0.7f, 0.7f);
 	prog.setUniform("Material.Ks", 0.9f, 0.9f, 0.9f);
 	prog.setUniform("Material.Ka", 0.2f, 0.2f, 0.2f);
@@ -131,6 +166,15 @@ void SceneBasic_Uniform::render()
 	
 	setMatrices();
 	plane_.render();
+
+	//vec3 cameraPos = vec3(7.0f * cos(angle), 2.0f, 7.0f * sin(angle));
+	//view = glm::lookAt(cameraPos, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f,
+	//	0.0f));
+	//// Draw sky
+	//prog.use();
+	//model = mat4(1.0f);
+	//setMatrices();
+	//sky.render();
 
 }
 

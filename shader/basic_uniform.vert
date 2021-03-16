@@ -14,6 +14,8 @@ out vec3 LightDir;
 out vec3 ViewDir;
 out vec2 TexCoord;
 
+out vec3 Vec;
+
 uniform mat4 ModelViewMatrix;
 uniform mat3 NormalMatrix;
 uniform mat4 ProjectionMatrix;
@@ -55,6 +57,8 @@ void main()
         ViewDir = toObjectLocal * normalize(-pos);
 
         TexCoord = VertexTexCoord;
+
+        Vec = VertexPosition;
         gl_Position = MVP * vec4(VertexPosition,1.0);
     }
 
@@ -63,6 +67,8 @@ void main()
         Normal = normalize( NormalMatrix * VertexNormal);
         Position = (ModelViewMatrix * vec4(VertexPosition,1.0)).xyz;
         TexCoord = VertexTexCoord;
+
+        Vec = VertexPosition;
         gl_Position = MVP * vec4(VertexPosition,1.0);
     }
 }

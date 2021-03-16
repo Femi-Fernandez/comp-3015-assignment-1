@@ -6,6 +6,7 @@ in vec2 TexCoord;
 
 in vec3 Position;
 in vec3 Normal;
+in vec3 Vec;
 
 uniform mat4 ModelViewMatrix;
 
@@ -23,19 +24,34 @@ vec3 Ka; // Ambient reflectivity
 } Material;
 
 uniform int lightingSelect;
+uniform int textureToUse;
 
 layout(binding=0) uniform sampler2D ColorTex;
 layout(binding=1) uniform sampler2D NormalTex;
 
+layout(binding=2) uniform sampler2D ConcreteColorTex;
+layout(binding=3) uniform sampler2D ConcreteNormalTex;
+
+layout(binding=0) uniform samplerCube skyBoxTex;
+
+
 layout (location = 0) out vec4 FragColor;
 
 
-
-vec3 phongModel( vec3 position, vec3 n ) {
+vec3 phongModel( vec3 position, vec3 n , int texToUse) {
 
 //calculate ambient here, to access each light La value use this:
+    vec4 baseTex = vec4(0.0f);
+    if(texToUse == 1)
+    {
+     vec4 baseTex= texture(ColorTex, TexCoord).rgba;
+    } 
+    if  (texToUse != 1)  
+    {
+    vec4 baseTex= texture(ConcreteColorTex, TexCoord).rgba;
+    }
 
-    vec4 baseTex = texture(ColorTex, TexCoord).rgba;
+    
     vec3 col = baseTex.rgb;
     vec3 ambient =  light.La * Material.Ka * col;
 
@@ -121,14 +137,19 @@ void main() {
         {
             vec3 norm = texture(NormalTex, TexCoord).xyz;
             norm.xy = 2.0 * norm.xy - 1.0;
-            FragColor = vec4(phongModel(LightDir, normalize(norm)), 1);
+
+            vec4 texColor = texture(skyBoxTex, normalize(Vec)).rgba;
+
+            FragColor = vec4(phongModel(LightDir, normalize(norm), 1), 1) + texColor;
         }
     
         if (lightingSelect == 2)
         {
             vec3 norm = texture(NormalTex, TexCoord).xyz;
             norm.xy = 2.0 * norm.xy - 1.0;
-            FragColor = vec4(blinnPhongSpot(Position, normalize(Normal)), 1);
+
+            vec4 texColor = texture(skyBoxTex, normalize(Vec)).rgba;
+            FragColor = vec4(blinnPhongSpot(Position, normalize(Normal)), 1) + texColor;
         
         }
 }
