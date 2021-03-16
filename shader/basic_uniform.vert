@@ -32,17 +32,13 @@ uniform int lightingSelect;
 
 void main()
 {
-    //Normal = normalize( NormalMatrix * VertexNormal);
-    //Position = (ModelViewMatrix * vec4(VertexPosition,1.0)).xyz;
-    //gl_Position = MVP * vec4(VertexPosition,1.0);
 
+//if pointlight is being used 
     if(lightingSelect == 1)
     {
-
         vec3 norm = normalize( NormalMatrix * VertexNormal );
         vec3 tang = normalize( NormalMatrix * vec3(VertexTangent) );
        
-        // Compute the binormal
         vec3 binormal = normalize( cross( norm, tang ) ) * VertexTangent.w;
        
         // Matrix for transformation to tangent space
@@ -62,11 +58,32 @@ void main()
         gl_Position = MVP * vec4(VertexPosition,1.0);
     }
 
+    //if spotlight is being used
     if(lightingSelect == 2)
     {
         Normal = normalize( NormalMatrix * VertexNormal);
         Position = (ModelViewMatrix * vec4(VertexPosition,1.0)).xyz;
         TexCoord = VertexTexCoord;
+
+
+        vec3 norm = normalize( NormalMatrix * VertexNormal );
+        vec3 tang = normalize( NormalMatrix * vec3(VertexTangent) );
+       
+        vec3 binormal = normalize( cross( norm, tang ) ) * VertexTangent.w;
+       
+        // Matrix for transformation to tangent space
+        mat3 toObjectLocal = mat3(
+        tang.x, binormal.x, norm.x,
+        tang.y, binormal.y, norm.y,
+        tang.z, binormal.z, norm.z ) ;
+       
+        vec3 pos = vec3( ModelViewMatrix * vec4(VertexPosition,1.0) );
+
+        LightDir = toObjectLocal * (light.Position.xyz - pos);
+        ViewDir = toObjectLocal * normalize(-pos);
+
+        TexCoord = VertexTexCoord;
+
 
         Vec = VertexPosition;
         gl_Position = MVP * vec4(VertexPosition,1.0);

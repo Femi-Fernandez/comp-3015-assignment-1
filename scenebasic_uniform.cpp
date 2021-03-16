@@ -39,7 +39,7 @@ sky(100.0f)
 
 {
 
-    mesh = ObjMesh::load("../Comp-3015-assignment-1/media/model.obj", true);
+    mesh = ObjMesh::load("media/model.obj", true);
 }
 
 void SceneBasic_Uniform::initScene()
@@ -49,40 +49,36 @@ void SceneBasic_Uniform::initScene()
 	glEnable(GL_DEPTH_TEST);
 
 	model = mat4(1.0f);
-
-	view = glm::lookAt(vec3(0.5f, 0.75f, 0.75f), vec3(0.0f, 0.0f, 0.0f),vec3(0.0f, 1.0f, 0.0f));
-	//view = glm::lookAt(vec3(5.0f, 5.0f, 7.5f), vec3(0.0f, 0.75f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+	view = glm::lookAt(vec3(5.0f, 5.0f, 7.5f), vec3(0.0f, 0.75f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 	projection = mat4(1.0f);
 
 
+	//set starting lighting type (point light)
 	lightingType = 1;
-
 	prog.setUniform("lightingSelect", lightingType);
-	//prog.setUniform("textureToUse", bikeNum);
 
-	if (lightingType == 1)
-	{
-		prog.setUniform("light.Position", view * glm::vec4(x, 1.2f, z + 1.0f, 1.0f));
-		prog.setUniform("light.L", vec3(0.8f, 0.8f, 0.8f));
-		prog.setUniform("light.La", vec3(0.8f, 0.8f, 0.8f));
-	}
+	//set point light values
+	prog.setUniform("light.Position", view * glm::vec4(x, 1.2f, z + 1.0f, 1.0f));
+	prog.setUniform("light.L", vec3(0.8f, 0.8f, 0.8f));
+	prog.setUniform("light.La", vec3(0.8f, 0.8f, 0.8f));
 
-	if (lightingType == 2)
-	{
-		projection = mat4(1.0f);
-		prog.setUniform("Spot.L", vec3(0.9f));
-		prog.setUniform("Spot.La", vec3(0.3f));
-		prog.setUniform("Spot.Exponent", 50.0f);
-		prog.setUniform("Spot.Cutoff", glm::radians(15.0f));
-	}
+	//set spotlight values
+	prog.setUniform("Spot.L", vec3(0.9f));
+	prog.setUniform("Spot.La", vec3(0.3f));
+	prog.setUniform("Spot.Exponent", 50.0f);
+	prog.setUniform("Spot.Cutoff", glm::radians(15.0f));
+	
 
-
+	//load all textures
 	GLuint colour = Texture::loadTexture("media/texture/bikeTex_col.png");
 	GLuint norm = Texture::loadTexture("media/texture/bikeTex_norm.png");
 
 	GLuint groundcol = Texture::loadTexture("media/texture/concrete_col.jpg");
 	GLuint groundnorm = Texture::loadTexture("media/texture/concrete_norm.jpg");
 
+	GLuint cubeTex = Texture::loadHdrCubeMap("media/cube/pisa-hdr/pisa");
+
+	//bind all textures
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, colour);
 	
@@ -96,10 +92,10 @@ void SceneBasic_Uniform::initScene()
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, groundnorm);
 
+	//swap to skybox shader and bind skybox texture
+	skyObj.use();
 
-	GLuint cubeTex = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
-	//activate and bindtexture
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTex);
 
 }
@@ -107,11 +103,17 @@ void SceneBasic_Uniform::initScene()
 void SceneBasic_Uniform::compile()
 {
 	try {
+		//load shader files to be used
 		prog.compileShader("shader/basic_uniform.vert");
 		prog.compileShader("shader/basic_uniform.frag");
 		prog.link();
 		
 		prog.use();
+
+		skyObj.compileShader("shader/skyBox.vert");
+		skyObj.compileShader("shader/skyBox.frag");
+		skyObj.link();
+
 
 	} catch (GLSLProgramException &e) {
 		cerr << e.what() << endl;
@@ -121,14 +123,21 @@ void SceneBasic_Uniform::compile()
 
 void SceneBasic_Uniform::update( float t )
 {
-	//update your angle here
+	//rotate camera around bike and change lighting type after each rotatation
 	float deltaT = t - tPrev;
 	if (tPrev == 0.0f)
 		deltaT = 0.0f;
 	tPrev = t;
-	angle += rotSpeed * deltaT;
-	if (angle > glm::two_pi<float>())
+	angle += rotSpeed * deltaT *3;
+	if (angle > glm::two_pi<float>()) 
+	{
 		angle -= glm::two_pi<float>();
+		lightingType++;
+		if (lightingType >2)
+		{
+			lightingType = 1;
+		}
+	}
 
 }
 
@@ -138,6 +147,11 @@ void SceneBasic_Uniform::render()
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 
+	prog.use();
+	//set lighting type
+	prog.setUniform("lightingSelect", lightingType);
+
+	//if spotlight is being used, set position and direction it is pointing in
 	if (lightingType == 2)
 	{
 		vec4 lightPos = vec4(0.0f, 10.0f, 0.0f, 1.0f);
@@ -145,8 +159,7 @@ void SceneBasic_Uniform::render()
 		mat3 normalMatrix = mat3(vec3(view[0]), vec3(view[1]), vec3(view[2]));
 		prog.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
 	}
-
-
+	//set what texture to apply to the bike and material properties
 	prog.setUniform("texSelect", 1);
 	prog.setUniform("Material.Kd", 0.4f, 0.4f, 0.4f);
 	prog.setUniform("Material.Ks", 0.9f, 0.9f, 0.9f);
@@ -154,8 +167,9 @@ void SceneBasic_Uniform::render()
 	prog.setUniform("Material.Shininess", 180.0f);
 
 	model = mat4(1.0f);
+	//rotate
 	model = glm::rotate(model, glm::radians(180.0f), vec3(0.0f, 1.0f, 0.0f));
-	model = glm::scale(model, vec3(.50f, .50f, .50f));
+	model = glm::scale(model, vec3(1.0f, 1.0f, 1.0f));
 	setMatrices();
 	mesh->render();
 
@@ -171,13 +185,14 @@ void SceneBasic_Uniform::render()
 	setMatrices();
 	plane_.render();
 
-	//vec3 cameraPos = vec3(7.0f * cos(angle), 2.0f, 7.0f * sin(angle));
-	//view = glm::lookAt(cameraPos, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-	//// Draw sky
-	//prog.use();
-	//model = mat4(1.0f);
-	//setMatrices();
-	//sky.render();
+	vec3 cameraPos = vec3(7.0f * cos(angle), 2.0f, 7.0f * sin(angle));
+	view = glm::lookAt(cameraPos, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f,0.0f));
+	// Draw sky
+	skyObj.use();
+	model = mat4(1.0f);
+	model = glm::scale(model, vec3(-1.0f, -1.0f, -1.0f));
+	setSkyMatrices();
+	sky.render();
 
 }
 
@@ -186,7 +201,7 @@ void SceneBasic_Uniform::setMatrices()
 	mat4 mv;
 
 	mv = view * model;
-
+	prog.use();
 	prog.setUniform("ModelViewMatrix", mv);
 	prog.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
 
@@ -194,6 +209,15 @@ void SceneBasic_Uniform::setMatrices()
 
 }
 
+void SceneBasic_Uniform::setSkyMatrices()
+{
+	mat4 mv;
+
+	mv = view * model;
+
+	skyObj.use();
+	skyObj.setUniform("MVP", projection * mv);
+}
 void SceneBasic_Uniform::resize(int w, int h)
 {
 	glViewport(0, 0, w, h);

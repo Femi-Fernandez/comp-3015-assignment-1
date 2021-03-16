@@ -11,73 +11,10 @@ in vec3 Vec;
 uniform mat4 ModelViewMatrix;
 
 uniform struct LightInfo {
- vec4 Position; // Light position in eye coords.
+ vec4 Position; // Light position
  vec3 La; // Ambient light intensity
  vec3 L; // Diffuse and specular light intensity
 } light;
-
-uniform struct MaterialInfo {
-vec3 Ka; // Ambient reflectivity
- vec3 Kd; // Diffuse reflectivity
- vec3 Ks; // Specular reflectivity
- float Shininess; // Specular shininess factor
-} Material;
-
-uniform int lightingSelect;
-uniform int texSelect;
-
-layout(binding=0) uniform sampler2D ColorTex;
-layout(binding=1) uniform sampler2D NormalTex;
-
-layout(binding=2) uniform sampler2D concreteColorTex;
-layout(binding=3) uniform sampler2D concreteNormalTex;
-
-
-layout(binding=0) uniform samplerCube skyBoxTex;
-
-
-layout (location = 0) out vec4 FragColor;
-
-
-vec3 phongModel( vec3 position, vec3 n, sampler2D Color) {
-
-//calculate ambient here, to access each light La value use this:
-
-    vec4 baseTex = texture(Color, TexCoord).rgba;
-    vec3 col = baseTex.rgb;
-    vec3 ambient =  light.La * Material.Ka * col;
-
-
-    //calculate diffuse here
-   // vec3 s = normalize(vec3(lights.Position)- position);    
-    vec3 s = normalize(position);    
-
-    //calculate dot product between s & n
-    float sDotN = max(dot(s,n), 0);                                              
-    vec3 diffuse = Material.Kd * sDotN * col;
-
-    //calculate specular here
-
-    vec3 spec = Material.Ks * light.L * sDotN;
-     //vec3 spec = vec3(0.0);
-
-
-     if( sDotN > 0.0 )
-    {
-     vec3 v = normalize(-position.xyz + ViewDir);
-
-     //phong model
-     vec3 r = reflect( -s, n );   
-     spec = Material.Ks * pow( max( dot(n,v), 0.0 ),Material.Shininess );
-
-    //blinnPhong
-    //vec3 h = normalize(v +s);
-    //spec = Material.Ks * pow( max( dot(h,n), 0.0 ),Material.Shininess );
-     }   
-
-     return ambient + light.L * (diffuse + spec);
-}
-
 
 uniform struct SpotLightInfo {
  vec3 Position; // Light position in eye coords.
@@ -88,28 +25,83 @@ uniform struct SpotLightInfo {
  float Cutoff;
 } Spot;
 
-vec3 blinnPhongSpot( vec3 position, vec3 n )
+uniform struct MaterialInfo {
+vec3 Ka; // Ambient reflectivity
+ vec3 Kd; // Diffuse reflectivity
+ vec3 Ks; // Specular reflectivity
+ float Shininess; // Specular shininess factor
+} Material;
+
+uniform int lightingSelect; //what lighting to use 
+uniform int texSelect; //what texture to display
+
+layout(binding=0) uniform sampler2D ColorTex; //bike color texture
+layout(binding=1) uniform sampler2D NormalTex;//bike normal map
+
+layout(binding=2) uniform sampler2D concreteColorTex; //concrete color texture
+layout(binding=3) uniform sampler2D concreteNormalTex; //concrete normal map
+
+
+layout (location = 0) out vec4 FragColor;
+
+
+vec3 phongModel( vec3 position, vec3 n, sampler2D Color) {
+
+    //calculate the ambient using the texture color
+    vec4 baseTex = texture(Color, TexCoord).rgba;
+    vec3 col = baseTex.rgb;
+
+    vec3 ambient =  light.La * Material.Ka * col;
+
+    //calculate diffuse
+    vec3 s = normalize(position);     
+    float sDotN = max(dot(s,n), 0);    
+    
+    vec3 diffuse = Material.Kd * sDotN * col;
+
+    //calculate specular
+     vec3 spec = vec3(0.0);
+
+     if( sDotN > 0.0 )
+        {
+        vec3 v = normalize(-position.xyz + ViewDir);
+        vec3 r = reflect( -s, n );   
+
+        spec = Material.Ks * pow( max( dot(n,v), 0.0 ),Material.Shininess );
+
+     }   
+     //return the final color
+     return ambient + light.L * (diffuse + spec);
+}
+
+vec3 blinnPhongSpot( vec3 position, vec3 n , sampler2D Color)
 {
-    vec4 baseTex = texture(ColorTex, TexCoord).rgba;
+
+    //calculate ambient
+    vec4 baseTex = texture(Color, TexCoord).rgba;
     vec3 col = baseTex.rgb;
 
     vec3 ambient =  Spot.La * Material.Ka * col;
+
+    //get values to calculate diffuse & work out where spotlight is shining
     vec3 s = normalize(vec3(Spot.Position) - position); 
 
-    float cosAng = dot(-s, normalize(Spot.Direction)); //cosine of the angle
-    float angle = acos( cosAng ); //gives you the actual angle
+    float cosAng = dot(-s, normalize(Spot.Direction));
+    float angle = acos( cosAng );
     float spotScale = 0.0;
 
     vec3 spec = vec3(0.0);
     vec3 diffuse = vec3(0,0,0);
+    //if its actually in the spotlight
     if(angle < Spot.Cutoff )
     {
         spotScale = pow( cosAng, Spot.Exponent );
 
-        float sDotN = dot(s,n);   //calculate dot product between s and n
-        vec3 diffuse = Material.Kd * sDotN * col;//calculate the diffues
+        //calculate diffuse
+        float sDotN = dot(s,n);  
+        vec3 diffuse = Material.Kd * sDotN * col;
         
-        //calculate the specular
+        //calculate specular
         if( sDotN > 0.0 )
             {
              vec3 v = normalize(-position.xyz);
@@ -120,40 +112,54 @@ vec3 blinnPhongSpot( vec3 position, vec3 n )
             }
             
     }
+    //return the final color
     return ambient + spotScale * Spot.L * (diffuse + spec);
 }
 
 void main() {
 
+    //if point light is being used
     if (lightingSelect == 1)
         {
-
-            //vec4 texColor = texture(skyBoxTex, normalize(Vec)).rgba;  + texColor
+        //if the bike is being rendered input bike color texture
             if(texSelect == 1)
             {
-            vec3 norm = texture(NormalTex, TexCoord).xyz;
-            norm.xy = 2.0 * norm.xy - 1.0;
+                vec3 norm = texture(NormalTex, TexCoord).xyz;
+                norm.xy = 2.0 * norm.xy - 1.0;
 
-            FragColor = vec4(phongModel(LightDir, normalize(norm), ColorTex), 1) ;
+                FragColor = vec4(phongModel(LightDir, normalize(norm), ColorTex), 1) ;
             }
-
+             //if the concrete is being rendered input concrete color texture
             if(texSelect == 2)
             {
-            vec3 norm = texture(concreteNormalTex, TexCoord).xyz;
-            norm.xy = 2.0 * norm.xy - 1.0;
+                vec3 norm = texture(concreteNormalTex, TexCoord).xyz;
+                norm.xy = 2.0 * norm.xy - 1.0;
 
-            FragColor = vec4(phongModel(LightDir, normalize(norm), concreteColorTex), 1) ;
+                FragColor = vec4(phongModel(LightDir, normalize(norm), concreteColorTex), 1) ;
             }
             
         }
     
-        if (lightingSelect == 2)
+    //if spotlight light is being used
+    if (lightingSelect == 2)
+    { 
+        //if the bike is being rendered input bike color texture
+        if(texSelect == 1)
         {
             vec3 norm = texture(NormalTex, TexCoord).xyz;
             norm.xy = 2.0 * norm.xy - 1.0;
-
-            //vec4 texColor = texture(skyBoxTex, normalize(Vec)).rgba;
-            FragColor = vec4(blinnPhongSpot(Position, normalize(Normal)), 1);
-        
+    
+            FragColor = vec4(blinnPhongSpot(Position, normalize(Normal), ColorTex), 1);
         }
+        //if the concrete is being rendered input concrete color texture
+        if(texSelect == 2)
+        {
+            vec3 norm = texture(concreteNormalTex, TexCoord).xyz;
+            norm.xy = 2.0 * norm.xy - 1.0;
+    
+            FragColor = vec4(blinnPhongSpot(Position, normalize(Normal), concreteColorTex), 1);
+        }
+        
+    
+    }
 }

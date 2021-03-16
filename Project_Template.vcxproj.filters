@@ -70,6 +70,12 @@
     </None>
     <None Include="shader\ground_shader.frag" />
     <None Include="shader\ground_shader.vert" />
+    <None Include="shader\skyBox.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shader\skyBox.vert">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helper\scene.h">

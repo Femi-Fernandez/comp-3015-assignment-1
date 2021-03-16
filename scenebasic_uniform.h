@@ -16,7 +16,7 @@ class SceneBasic_Uniform : public Scene
 {
 private:
     GLuint vaoHandle, groundnorm, groundcol, colour, norm;
-    GLSLProgram prog;
+    GLSLProgram prog, skyObj;
     //float angle;
 
     std::unique_ptr<ObjMesh> mesh;
@@ -27,6 +27,7 @@ private:
     void compile();
 
     void setMatrices();
+    void setSkyMatrices();
 
 public:
     SceneBasic_Uniform();

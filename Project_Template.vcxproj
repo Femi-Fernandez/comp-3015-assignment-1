@@ -162,6 +162,8 @@
     <None Include="shader\basic_uniform.vert" />
     <None Include="shader\ground_shader.frag" />
     <None Include="shader\ground_shader.vert" />
+    <None Include="shader\skyBox.frag" />
+    <None Include="shader\skyBox.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helper\aabb.h" />
