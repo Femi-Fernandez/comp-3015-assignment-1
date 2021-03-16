@@ -49,7 +49,8 @@ void SceneBasic_Uniform::initScene()
 	glEnable(GL_DEPTH_TEST);
 
 	model = mat4(1.0f);
-	view = glm::lookAt(vec3(5.0f, 5.0f, 7.5f), vec3(0.0f, 0.75f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+
+	view = glm::lookAt(vec3(0.5f, 0.75f, 0.75f), vec3(0.0f, 0.0f, 0.0f),vec3(0.0f, 1.0f, 0.0f));
 	projection = mat4(1.0f);
 
 
@@ -68,7 +69,6 @@ void SceneBasic_Uniform::initScene()
 	prog.setUniform("Spot.Exponent", 50.0f);
 	prog.setUniform("Spot.Cutoff", glm::radians(15.0f));
 	
-
 	//load all textures
 	GLuint colour = Texture::loadTexture("media/texture/bikeTex_col.png");
 	GLuint norm = Texture::loadTexture("media/texture/bikeTex_norm.png");
@@ -159,35 +159,35 @@ void SceneBasic_Uniform::render()
 		mat3 normalMatrix = mat3(vec3(view[0]), vec3(view[1]), vec3(view[2]));
 		prog.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
 	}
-	//set what texture to apply to the bike and material properties
+
+	//set what texture to apply to the bike and material properties for the bike
 	prog.setUniform("texSelect", 1);
 	prog.setUniform("Material.Kd", 0.4f, 0.4f, 0.4f);
 	prog.setUniform("Material.Ks", 0.9f, 0.9f, 0.9f);
 	prog.setUniform("Material.Ka", 0.5f, 0.5f, 0.5f);
 	prog.setUniform("Material.Shininess", 180.0f);
 
+	//render bike model
 	model = mat4(1.0f);
-	//rotate
-	model = glm::rotate(model, glm::radians(180.0f), vec3(0.0f, 1.0f, 0.0f));
-	model = glm::scale(model, vec3(1.0f, 1.0f, 1.0f));
 	setMatrices();
 	mesh->render();
 
-
+	//set what texture to apply to the bike and material properties for the concrete ground
 	prog.setUniform("texSelect", 2);
 	prog.setUniform("Material.Kd", 0.7f, 0.7f, 0.7f);
 	prog.setUniform("Material.Ks", 0.9f, 0.9f, 0.9f);
 	prog.setUniform("Material.Ka", 0.2f, 0.2f, 0.2f);
 	prog.setUniform("Material.Shininess", 180.0f);
+
+	//render concrete
 	model = mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0.0f, -.75f, 0.0f));
-	
 	setMatrices();
 	plane_.render();
 
+	//setup skybox
 	vec3 cameraPos = vec3(7.0f * cos(angle), 2.0f, 7.0f * sin(angle));
 	view = glm::lookAt(cameraPos, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f,0.0f));
-	// Draw sky
 	skyObj.use();
 	model = mat4(1.0f);
 	model = glm::scale(model, vec3(-1.0f, -1.0f, -1.0f));
@@ -198,9 +198,10 @@ void SceneBasic_Uniform::render()
 
 void SceneBasic_Uniform::setMatrices()
 {
+	//setup view matrices for the bike and concrete
 	mat4 mv;
-
 	mv = view * model;
+
 	prog.use();
 	prog.setUniform("ModelViewMatrix", mv);
 	prog.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
@@ -211,8 +212,8 @@ void SceneBasic_Uniform::setMatrices()
 
 void SceneBasic_Uniform::setSkyMatrices()
 {
+	//setup view matrices for the skybox
 	mat4 mv;
-
 	mv = view * model;
 
 	skyObj.use();
