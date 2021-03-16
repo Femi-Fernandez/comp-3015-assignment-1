@@ -149,6 +149,7 @@ void SceneBasic_Uniform::render()
 
 	prog.use();
 	//set lighting type
+
 	prog.setUniform("lightingSelect", lightingType);
 
 	//if spotlight is being used, set position and direction it is pointing in

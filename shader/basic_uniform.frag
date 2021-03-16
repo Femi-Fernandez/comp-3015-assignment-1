@@ -18,8 +18,8 @@ uniform struct LightInfo {
 
 uniform struct SpotLightInfo {
  vec3 Position; // Light position in eye coords.
- vec3 Direction; // Diffuse and specular light intensity
- vec3 La; // Ambient light intensity
+ vec3 Direction; // direction the light is pointing in
+ vec3 La;
  vec3 L;
  float Exponent;
  float Cutoff;
@@ -65,7 +65,6 @@ vec3 phongModel( vec3 position, vec3 n, sampler2D Color) {
      if( sDotN > 0.0 )
         {
         vec3 v = normalize(-position.xyz + ViewDir);
-        vec3 r = reflect( -s, n );   
 
         spec = Material.Ks * pow( max( dot(n,v), 0.0 ),Material.Shininess );
 
