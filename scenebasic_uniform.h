@@ -15,9 +15,8 @@
 class SceneBasic_Uniform : public Scene
 {
 private:
-    GLuint vaoHandle;
+    GLuint vaoHandle, groundnorm, groundcol, colour, norm;
     GLSLProgram prog;
-    GLSLProgram ground;
     //float angle;
 
     std::unique_ptr<ObjMesh> mesh;

@@ -24,8 +24,13 @@ using glm::mat3;
 float x, z;
 
 int lightingType;
-int bikeNum;
-int concreteNum;
+int textureType;
+GLuint colour;
+GLuint norm;
+
+GLuint groundcol;
+GLuint groundnorm;
+
 SceneBasic_Uniform::SceneBasic_Uniform() : plane_(10.0f, 10.0f, 100, 100), 
 angle(0.0f), 
 tPrev(0.0f),
@@ -51,16 +56,15 @@ void SceneBasic_Uniform::initScene()
 
 
 	lightingType = 1;
-	bikeNum = 1;
-	concreteNum = 2;
+
 	prog.setUniform("lightingSelect", lightingType);
-	prog.setUniform("textureToUse", bikeNum);
+	//prog.setUniform("textureToUse", bikeNum);
 
 	if (lightingType == 1)
 	{
 		prog.setUniform("light.Position", view * glm::vec4(x, 1.2f, z + 1.0f, 1.0f));
 		prog.setUniform("light.L", vec3(0.8f, 0.8f, 0.8f));
-		prog.setUniform("light.La", vec3(0.8f, 0.8f, 0.8f));	
+		prog.setUniform("light.La", vec3(0.8f, 0.8f, 0.8f));
 	}
 
 	if (lightingType == 2)
@@ -73,33 +77,30 @@ void SceneBasic_Uniform::initScene()
 	}
 
 
-	GLuint colour = Texture::loadTexture("media/texture/scifi_bike_base.jpg");
-	GLuint norm = Texture::loadTexture("media/texture/scifi_bike_norm.png");
+	GLuint colour = Texture::loadTexture("media/texture/bikeTex_col.png");
+	GLuint norm = Texture::loadTexture("media/texture/bikeTex_norm.png");
 
 	GLuint groundcol = Texture::loadTexture("media/texture/concrete_col.jpg");
 	GLuint groundnorm = Texture::loadTexture("media/texture/concrete_norm.jpg");
 
-
-
-	//GLuint cubeTex = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
-	////activate and bindtexture
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTex);
-
-
-
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, colour);
-
+	
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, norm);
 
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, groundcol);
-
+	
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, groundnorm);
+
+
+	GLuint cubeTex = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
+	//activate and bindtexture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTex);
 
 }
 
@@ -144,7 +145,9 @@ void SceneBasic_Uniform::render()
 		mat3 normalMatrix = mat3(vec3(view[0]), vec3(view[1]), vec3(view[2]));
 		prog.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
 	}
-	prog.setUniform("textureToUse", bikeNum);
+
+
+	prog.setUniform("texSelect", 1);
 	prog.setUniform("Material.Kd", 0.4f, 0.4f, 0.4f);
 	prog.setUniform("Material.Ks", 0.9f, 0.9f, 0.9f);
 	prog.setUniform("Material.Ka", 0.5f, 0.5f, 0.5f);
@@ -152,11 +155,12 @@ void SceneBasic_Uniform::render()
 
 	model = mat4(1.0f);
 	model = glm::rotate(model, glm::radians(180.0f), vec3(0.0f, 1.0f, 0.0f));
-	//model = glm::scale(model, vec3(2.0f, 2.0f, 2.0f));
+	model = glm::scale(model, vec3(.50f, .50f, .50f));
 	setMatrices();
 	mesh->render();
 
-	prog.setUniform("textureToUse", concreteNum);
+
+	prog.setUniform("texSelect", 2);
 	prog.setUniform("Material.Kd", 0.7f, 0.7f, 0.7f);
 	prog.setUniform("Material.Ks", 0.9f, 0.9f, 0.9f);
 	prog.setUniform("Material.Ka", 0.2f, 0.2f, 0.2f);
@@ -168,8 +172,7 @@ void SceneBasic_Uniform::render()
 	plane_.render();
 
 	//vec3 cameraPos = vec3(7.0f * cos(angle), 2.0f, 7.0f * sin(angle));
-	//view = glm::lookAt(cameraPos, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f,
-	//	0.0f));
+	//view = glm::lookAt(cameraPos, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 	//// Draw sky
 	//prog.use();
 	//model = mat4(1.0f);
